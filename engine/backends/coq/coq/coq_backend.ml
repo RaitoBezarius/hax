@@ -68,7 +68,7 @@ open AST
 module CoqLibrary : Library = struct
   module Notation = struct
     let int_repr (x : string) (i : string) : string =
-      "(Int"^x^".repr" ^ " " ^ i ^ ")"
+      "(Int" ^ x ^ ".repr" ^ " " ^ i ^ ")"
 
     let type_str : string = "Type"
     let bool_str : string = "bool"
@@ -168,8 +168,7 @@ struct
     | TApp { ident = `TupleType n; args } when n >= 2 ->
         C.AST.Product (args_ty span args)
     | TApp { ident; args } ->
-        C.AST.AppTy
-          (C.AST.NameTy (pglobal_ident ident), args_ty span args)
+        C.AST.AppTy (C.AST.NameTy (pglobal_ident ident), args_ty span args)
     | TArrow (inputs, output) ->
         List.fold_right ~init:(pty span output)
           ~f:(fun x y -> C.AST.Arrow (x, y))
@@ -385,9 +384,7 @@ struct
     | TyAlias { name; ty; _ } ->
         [
           C.AST.Notation
-            ( "'" ^ pconcrete_ident name ^ "'",
-              C.AST.Type (pty span ty),
-              None );
+            ("'" ^ pconcrete_ident name ^ "'", C.AST.Type (pty span ty), None);
         ]
     (* record *)
     | Type { name; generics; variants = [ v ]; is_struct = true } ->
@@ -449,8 +446,7 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.type_name),
-                          C.AST.NameTy (o.type_name) ) );
+                        (C.AST.NameTy o.type_name, C.AST.NameTy o.type_name) );
                 ]
             | "bytes" ->
                 let open Hacspeclib_macro_parser in
@@ -470,8 +466,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.bytes_name),
-                          C.AST.NameTy (o.bytes_name) ) );
+                        (C.AST.NameTy o.bytes_name, C.AST.NameTy o.bytes_name)
+                    );
                 ]
             | "unsigned_public_integer" ->
                 let open Hacspeclib_macro_parser in
@@ -491,8 +487,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.integer_name),
-                          C.AST.NameTy (o.integer_name) ) );
+                        ( C.AST.NameTy o.integer_name,
+                          C.AST.NameTy o.integer_name ) );
                 ]
             | "public_bytes" ->
                 let open Hacspeclib_macro_parser in
@@ -505,15 +501,14 @@ struct
                       (* int_of_string *) o.size )
                 in
                 [
-                  C.AST.Notation
-                    ("'" ^ o.bytes_name ^ "'", C.AST.Type typ, None);
+                  C.AST.Notation ("'" ^ o.bytes_name ^ "'", C.AST.Type typ, None);
                   C.AST.Definition
                     ( o.bytes_name,
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.bytes_name),
-                          C.AST.NameTy (o.bytes_name) ) );
+                        (C.AST.NameTy o.bytes_name, C.AST.NameTy o.bytes_name)
+                    );
                 ]
             | "array" ->
                 let open Hacspeclib_macro_parser in
@@ -547,8 +542,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.array_name),
-                          C.AST.NameTy (o.array_name) ) );
+                        (C.AST.NameTy o.array_name, C.AST.NameTy o.array_name)
+                    );
                 ]
             | _ -> unsupported ())
         | _ -> unsupported ())
