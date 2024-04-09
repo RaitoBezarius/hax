@@ -68,7 +68,7 @@ open AST
 module CoqLibrary : Library = struct
   module Notation = struct
     let int_repr (x : string) (i : string) : string =
-      "(@repr" ^ " " ^ "WORDSIZE" ^ x ^ " " ^ i ^ ")"
+      "(Int"^x^".repr" ^ " " ^ i ^ ")"
 
     let type_str : string = "Type"
     let bool_str : string = "bool"
@@ -169,7 +169,7 @@ struct
         C.AST.Product (args_ty span args)
     | TApp { ident; args } ->
         C.AST.AppTy
-          (C.AST.NameTy (pglobal_ident ident ^ "_t"), args_ty span args)
+          (C.AST.NameTy (pglobal_ident ident), args_ty span args)
     | TArrow (inputs, output) ->
         List.fold_right ~init:(pty span output)
           ~f:(fun x y -> C.AST.Arrow (x, y))
@@ -385,7 +385,7 @@ struct
     | TyAlias { name; ty; _ } ->
         [
           C.AST.Notation
-            ( "'" ^ pconcrete_ident name ^ "_t" ^ "'",
+            ( "'" ^ pconcrete_ident name ^ "'",
               C.AST.Type (pty span ty),
               None );
         ]
@@ -437,7 +437,7 @@ struct
                 in
                 [
                   C.AST.Notation
-                    ( "'" ^ o.type_name ^ "_t" ^ "'",
+                    ( "'" ^ o.type_name ^ "'",
                       C.AST.Type
                         (C.AST.NatMod
                            ( o.type_of_canvas,
@@ -449,8 +449,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.type_name ^ "_t"),
-                          C.AST.NameTy (o.type_name ^ "_t") ) );
+                        ( C.AST.NameTy (o.type_name),
+                          C.AST.NameTy (o.type_name) ) );
                 ]
             | "bytes" ->
                 let open Hacspeclib_macro_parser in
@@ -459,7 +459,7 @@ struct
                 in
                 [
                   C.AST.Notation
-                    ( "'" ^ o.bytes_name ^ "_t" ^ "'",
+                    ( "'" ^ o.bytes_name ^ "'",
                       C.AST.Type
                         (C.AST.ArrayTy
                            ( C.AST.Int { size = C.AST.U8; signed = false },
@@ -470,8 +470,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.bytes_name ^ "_t"),
-                          C.AST.NameTy (o.bytes_name ^ "_t") ) );
+                        ( C.AST.NameTy (o.bytes_name),
+                          C.AST.NameTy (o.bytes_name) ) );
                 ]
             | "unsigned_public_integer" ->
                 let open Hacspeclib_macro_parser in
@@ -480,7 +480,7 @@ struct
                 in
                 [
                   C.AST.Notation
-                    ( "'" ^ o.integer_name ^ "_t" ^ "'",
+                    ( "'" ^ o.integer_name ^ "'",
                       C.AST.Type
                         (C.AST.ArrayTy
                            ( C.AST.Int { size = C.AST.U8; signed = false },
@@ -491,8 +491,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.integer_name ^ "_t"),
-                          C.AST.NameTy (o.integer_name ^ "_t") ) );
+                        ( C.AST.NameTy (o.integer_name),
+                          C.AST.NameTy (o.integer_name) ) );
                 ]
             | "public_bytes" ->
                 let open Hacspeclib_macro_parser in
@@ -506,14 +506,14 @@ struct
                 in
                 [
                   C.AST.Notation
-                    ("'" ^ o.bytes_name ^ "_t" ^ "'", C.AST.Type typ, None);
+                    ("'" ^ o.bytes_name ^ "'", C.AST.Type typ, None);
                   C.AST.Definition
                     ( o.bytes_name,
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.bytes_name ^ "_t"),
-                          C.AST.NameTy (o.bytes_name ^ "_t") ) );
+                        ( C.AST.NameTy (o.bytes_name),
+                          C.AST.NameTy (o.bytes_name) ) );
                 ]
             | "array" ->
                 let open Hacspeclib_macro_parser in
@@ -536,7 +536,7 @@ struct
                 in
                 [
                   C.AST.Notation
-                    ( "'" ^ o.array_name ^ "_t" ^ "'",
+                    ( "'" ^ o.array_name ^ "'",
                       C.AST.Type
                         (C.AST.ArrayTy
                            ( C.AST.Int { size = typ; signed = false },
@@ -547,8 +547,8 @@ struct
                       [],
                       C.AST.Var "id",
                       C.AST.Arrow
-                        ( C.AST.NameTy (o.array_name ^ "_t"),
-                          C.AST.NameTy (o.array_name ^ "_t") ) );
+                        ( C.AST.NameTy (o.array_name),
+                          C.AST.NameTy (o.array_name) ) );
                 ]
             | _ -> unsupported ())
         | _ -> unsupported ())
@@ -667,11 +667,13 @@ let string_of_items : AST.item list -> string =
 
 let hardcoded_coq_headers =
   "(* File automatically generated by Hacspec *)\n\
-   From Hacspec Require Import Hacspec_Lib MachineIntegers.\n\
+   From Hacspec Require Import Hacspec_Lib.\n\
    From Coq Require Import ZArith.\n\
    Import List.ListNotations.\n\
+   Require Import Coq.Strings.String.\n\
    Open Scope Z_scope.\n\
-   Open Scope bool_scope.\n"
+   Open Scope bool_scope.\n\
+   Open Scope hacspec_scope.\n"
 
 let translate _ (_bo : BackendOptions.t) (items : AST.item list) :
     Types.file list =
