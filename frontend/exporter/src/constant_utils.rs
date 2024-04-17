@@ -510,9 +510,18 @@ pub fn const_value_to_constant_expr<'tcx, S: UnderOwnerState<'tcx>>(
     match val {
         ConstValue::Scalar(scalar) => scalar_to_constant_expr(s, ty, &scalar, span),
         ConstValue::ByRef { .. } => const_value_reference_to_constant_expr(s, ty, val, span),
-        ConstValue::Slice { .. } => {
-            (ConstantExprKind::Todo(format!("ConstValue::Slice: {:?}", val)))
-                .decorate(ty.sinto(s), span.sinto(s))
+        ConstValue::Slice { data, .. } => {
+            let values =
+                data.inner()
+                    .get_bytes_unchecked(rustc_middle::mir::interpret::AllocRange {
+                        start: rustc_abi::Size::from_bits(0),
+                        size: rustc_abi::Size::from_bits(data.inner().len() * 8),
+                    });
+            ConstantExprKind::Literal(ConstantLiteral::ByteStr(
+                values.iter().copied().collect(),
+                StrStyle::Cooked,
+            ))
+            .decorate(ty.sinto(s), span.sinto(s))
         }
         ConstValue::ZeroSized { .. } => {
             // Should be unit
